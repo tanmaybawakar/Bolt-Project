@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSCS - Visual Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .preview-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .preview-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+        }
+
+        .preview-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffffff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .preview-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .mockup-frame {
+            background: #1f2937;
+            border-radius: 20px;
+            padding: 8px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            margin-bottom: 40px;
+            border: 2px solid #374151;
+        }
+
+        .mockup-screen {
+            background: #111827;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mockup-header {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            padding: 16px 24px;
+            border-bottom: 1px solid #4b5563;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mockup-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .radar-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(45deg, #3b82f6, #60a5fa);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 16px;
+            font-size: 0.875rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .mockup-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 320px;
+            height: 600px;
+        }
+
+        .sidebar {
+            background: #1f2937;
+            border-right: 1px solid #374151;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: #e5e7eb;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 8px;
+        }
+
+        .drone-item {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid #10b981;
+            transition: all 0.3s ease;
+        }
+
+        .drone-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .drone-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .drone-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .drone-id {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .drone-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.75rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .main-content {
+            background: #0f172a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            position: relative;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.5;
+        }
+
+        .drone-marker {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(45deg, #10b981, #34d399);
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+            animation: drone-pulse 2s infinite;
+        }
+
+        @keyframes drone-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
+            50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.9); }
+        }
+
+        .waypoint {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+
+        .flight-path {
+            position: absolute;
+            border: 2px dashed #3b82f6;
+            opacity: 0.7;
+            animation: dash 3s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -20; }
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(31, 41, 55, 0.9);
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(59, 130, 246, 0.8);
+            transform: scale(1.1);
+        }
+
+        .telemetry-panel {
+            background: #1f2937;
+            border-left: 1px solid #374151;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .telemetry-section {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #6b7280;
+        }
+
+        .telemetry-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #374151;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .mission-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+        }
+
+        .mission-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            color: #ffffff;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            color: #ffffff;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            color: #ffffff;
+        }
+
+        .mission-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #475569;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+            border-color: #3b82f6;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(45deg, #3b82f6, #60a5fa);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+        }
+
+        .feature-description {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .tech-stack {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 16px;
+            padding: 32px;
+            margin-top: 40px;
+            border: 1px solid #475569;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .tech-item {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #374151;
+        }
+
+        .tech-name {
+            font-weight: 600;
+            color: #3b82f6;
+            margin-bottom: 4px;
+        }
+
+        .tech-purpose {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="preview-header">
+            <h1>🚁 Drone Swarm Control Software (DSCS)</h1>
+            <p>Advanced AI-powered defense and surveillance system for centralized drone fleet management with real-time coordination, autonomous navigation, and intelligent target tracking capabilities.</p>
+        </div>
+
+        <div class="mockup-frame">
+            <div class="mockup-screen">
+                <div class="mockup-header">
+                    <div class="mockup-title">
+                        <div class="radar-icon">📡</div>
+                        <div>
+                            <h2 style="font-size: 1.25rem; font-weight: 700;">DroneFleet Command</h2>
+                            <p style="font-size: 0.875rem; color: #9ca3af;">Defense & Surveillance Operations</p>
+                        </div>
+                    </div>
+                    <div class="status-indicators">
+                        <div class="status-item">
+                            <div class="status-dot"></div>
+                            <span>System Operational</span>
+                        </div>
+                        <div class="status-item">
+                            <span>🛰️ GPS: 12/12 Connected</span>
+                        </div>
+                        <div class="status-item">
+                            <span>5/5 Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mockup-content">
+                    <!-- Left Sidebar - Fleet Status -->
+                    <div class="sidebar">
+                        <h3>🚁 Fleet Status</h3>
+                        
+                        <div class="drone-item">
+                            <div class="drone-header">
+                                <div class="drone-name">Alpha Leader</div>
+                                <div style="color: #10b981;">●</div>
+                            </div>
+                            <div class="drone-id">DR-001 | Surveillance</div>
+                            <div class="drone-stats">
+                                <div class="stat-item">
+                                    <span>🔋</span>
+                                    <span>87%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>📶</span>
+                                    <span>95%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>📍</span>
+                                    <span>150m</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>🎯</span>
+                                    <span>Patrol</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="drone-item">
+                            <div class="drone-header">
+                                <div class="drone-name">Beta Wing</div>
+                                <div style="color: #10b981;">●</div>
+                            </div>
+                            <div class="drone-id">DR-002 | Attack</div>
+                            <div class="drone-stats">
+                                <div class="stat-item">
+                                    <span>🔋</span>
+                                    <span>92%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>📶</span>
+                                    <span>88%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>📍</span>
+                                    <span>145m</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>🎯</span>
+                                    <span>Track</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="drone-item">
+                            <div class="drone-header">
+                                <div class="drone-name">Gamma Scout</div>
+                                <div style="color: #f59e0b;">●</div>
+                            </div>
+                            <div class="drone-id">DR-003 | Reconnaissance</div>
+                            <div class="drone-stats">
+                                <div class="stat-item">
+                                    <span>🔋</span>
+                                    <span>76%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>📶</span>
+                                    <span>91%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>📍</span>
+                                    <span>155m</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>🎯</span>
+                                    <span>Engage</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid #3b82f6;">
+                            <h4 style="color: #3b82f6; margin-bottom: 8px;">🎯 Active Mission</h4>
+                            <p style="font-size: 0.875rem; color: #e5e7eb;">Border Surveillance Alpha-7</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 68%;"></div>
+                            </div>
+                            <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 4px;">68% Complete</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Map Area -->
+                    <div class="main-content">
+                        <div class="map-container">
+                            <div class="grid-overlay"></div>
+                            
+                            <!-- Map Controls -->
+                            <div class="map-controls">
+                                <div class="control-btn">🧭</div>
+                                <div class="control-btn">📍</div>
+                                <div class="control-btn">🛣️</div>
+                                <div class="control-btn">🎯</div>
+                            </div>
+
+                            <!-- Drone Markers -->
+                            <div class="drone-marker" style="top: 25%; left: 30%;"></div>
+                            <div class="drone-marker" style="top: 35%; left: 45%;"></div>
+                            <div class="drone-marker" style="top: 45%; left: 25%; background: linear-gradient(45deg, #f59e0b, #fbbf24);"></div>
+
+                            <!-- Waypoints -->
+                            <div class="waypoint" style="top: 20%; left: 60%;"></div>
+                            <div class="waypoint" style="top: 50%; left: 70%;"></div>
+                            <div class="waypoint" style="top: 65%; left: 40%;"></div>
+
+                            <!-- Flight Paths -->
+                            <svg style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;">
+                                <line x1="30%" y1="25%" x2="60%" y2="20%" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,5" opacity="0.7"/>
+                                <line x1="45%" y1="35%" x2="70%" y2="50%" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,5" opacity="0.7"/>
+                                <line x1="25%" y1="45%" x2="40%" y2="65%" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,5" opacity="0.7"/>
+                            </svg>
+
+                            <!-- GPS Coordinates Display -->
+                            <div style="position: absolute; top: 20px; right: 20px; background: rgba(31, 41, 55, 0.9); border: 1px solid #4b5563; border-radius: 8px; padding: 12px; font-family: monospace;">
+                                <div style="font-size: 0.75rem; color: #9ca3af;">Operation Center</div>
+                                <div style="font-size: 0.875rem; color: #ffffff;">37.7749° N, 122.4194° W</div>
+                                <div style="font-size: 0.75rem; color: #10b981; margin-top: 4px;">Coverage: 5.2 km² | 3D Fix</div>
+                            </div>
+
+                            <!-- Mission Controls -->
+                            <div class="mission-controls">
+                                <button class="mission-btn btn-primary">
+                                    ▶️ Resume Mission
+                                </button>
+                                <button class="mission-btn btn-secondary">
+                                    ⏸️ Pause All
+                                </button>
+                                <button class="mission-btn btn-danger">
+                                    ⏹️ Emergency Stop
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar - Telemetry -->
+                    <div class="telemetry-panel">
+                        <h3>📊 Live Telemetry</h3>
+                        
+                        <div class="telemetry-section">
+                            <div class="telemetry-header">
+                                <span>🛰️</span>
+                                <span>GPS Status</span>
+                            </div>
+                            <div class="metric-grid">
+                                <div class="metric-item">
+                                    <div class="metric-value">12</div>
+                                    <div class="metric-label">Satellites</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">2.1m</div>
+                                    <div class="metric-label">Accuracy</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-section">
+                            <div class="telemetry-header">
+                                <span>🔋</span>
+                                <span>Power Status</span>
+                            </div>
+                            <div class="metric-grid">
+                                <div class="metric-item">
+                                    <div class="metric-value">87%</div>
+                                    <div class="metric-label">Battery</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">2.3h</div>
+                                    <div class="metric-label">Flight Time</div>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 87%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-section">
+                            <div class="telemetry-header">
+                                <span>🎯</span>
+                                <span>Target Detection</span>
+                            </div>
+                            <div style="font-size: 0.875rem; color: #e5e7eb;">
+                                <div style="margin-bottom: 8px;">🚗 Vehicle Detected: 3</div>
+                                <div style="margin-bottom: 8px;">👤 Personnel: 7</div>
+                                <div style="margin-bottom: 8px;">⚠️ Threats: 0</div>
+                                <div style="color: #10b981;">✅ Area Secure</div>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-section">
+                            <div class="telemetry-header">
+                                <span>📡</span>
+                                <span>Communication</span>
+                            </div>
+                            <div class="metric-grid">
+                                <div class="metric-item">
+                                    <div class="metric-value">95%</div>
+                                    <div class="metric-label">Signal</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">12ms</div>
+                                    <div class="metric-label">Latency</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 16px; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid #10b981;">
+                            <div style="color: #10b981; font-weight: 600; margin-bottom: 4px;">🟢 System Status</div>
+                            <div style="font-size: 0.875rem; color: #e5e7eb;">All systems operational</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Features Section -->
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-title">AI-Powered Navigation</div>
+                <div class="feature-description">
+                    Intelligent route planning with real-time obstacle detection, weather adaptation, and autonomous decision-making using advanced machine learning algorithms.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">Target Detection & Tracking</div>
+                <div class="feature-description">
+                    Multi-drone coordination for target identification, tracking, and engagement using computer vision, thermal imaging, and behavioral analysis.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📹</div>
+                <div class="feature-title">Live Video Feeds</div>
+                <div class="feature-description">
+                    Real-time HD video streaming with thermal, night vision, and zoom capabilities. Secure encrypted transmission with cloud synchronization.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🗺️</div>
+                <div class="feature-title">Mission Planning</div>
+                <div class="feature-description">
+                    Interactive mission planning with route simulation, objective setting, and comprehensive mission replay with telemetry overlay.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <div class="feature-title">Security & Encryption</div>
+                <div class="feature-description">
+                    Military-grade encryption for all communications, secure data transmission, and comprehensive access control systems.
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <div class="feature-title">Mobile Control</div>
+                <div class="feature-description">
+                    Field-ready mobile interface for emergency operations, voice command support, and real-time tactical coordination.
+                </div>
+            </div>
+        </div>
+
+        <!-- Technology Stack -->
+        <div class="tech-stack">
+            <h2 style="text-align: center; font-size: 1.75rem; margin-bottom: 8px; color: #e2e8f0;">🔧 Technology Stack</h2>
+            <p style="text-align: center; color: #94a3b8; margin-bottom: 24px;">Cutting-edge technologies powering the DSCS platform</p>
+            
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-name">React + Three.js</div>
+                    <div class="tech-purpose">3D Interface & Visualization</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">Python + ROS</div>
+                    <div class="tech-purpose">Drone Communication</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">YOLOv8 + OpenCV</div>
+                    <div class="tech-purpose">Computer Vision & AI</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">Node.js + Socket.io</div>
+                    <div class="tech-purpose">Real-time Backend</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">TensorFlow</div>
+                    <div class="tech-purpose">Machine Learning</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">Mapbox API</div>
+                    <div class="tech-purpose">Mapping & GPS</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 24px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid #3b82f6;">
+            <h3 style="color: #3b82f6; margin-bottom: 8px;">🚀 Ready for Implementation</h3>
+            <p style="color: #e2e8f0;">This comprehensive design showcases the full potential of the Drone Swarm Control Software, ready for defense forces, border security, and emergency response teams.</p>
+        </div>
+    </div>
+</body>
+</html>
